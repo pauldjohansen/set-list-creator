@@ -3,12 +3,13 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
 import jwt
+import json
 
 load_dotenv()
 
 key_id = os.environ.get("APPLE_KEY_ID")
 team_id = os.environ.get("APPLE_TEAM_ID")
-KEY_FILE_LOCATION= "keys/AuthKey_YJQZ9U3UTA.p8"
+KEY_FILE_LOCATION = "keys/AuthKey_YJQZ9U3UTA.p8"
 
 MUT_GENERATOR = "https://d1skmsh1xucp4e.cloudfront.net/index.html"
 BASE_API_URL = "https://api.music.apple.com/v1/"
@@ -30,15 +31,16 @@ class AppleMusicClient:
         self.app_id = APP_ID
         self.music_user_token = MUSIC_USER_TOKEN
 
-    def generate_headers(self, include_music_user_token: bool):
+    def generate_headers(self, include_music_user_token: bool, include_content_type: bool):
         playlist_headers = {}
         playlist_headers["Authorization"] = f"Bearer {self.developer_token}"
         if include_music_user_token:
             playlist_headers["Music-User-Token"] = self.music_user_token
+        if include_content_type:
+            playlist_headers["Content-Type"] = "application/json"
         return playlist_headers
 
-
-    def search_for_song(self, song_title, artist):
+    def search_for_song_id(self, song_title, artist):
         search_url = SEARCH_API_ENDPOINT + "?"
         search_term = f"{song_title}+{artist}".replace(" ", "+")
         params = f"types=songs&term={search_term}"
@@ -46,16 +48,16 @@ class AppleMusicClient:
 
         response = requests.get(
             url=search_url,
-            headers=self.generate_headers(False),
+            headers=self.generate_headers(False, False),
         )
         response.raise_for_status()
         search_results = response.json()
-        print(search_results["results"]["songs"]["data"][0]["attributes"]["name"])
+        return search_results["results"]["songs"]["data"][0]["id"]
 
     def run_test(self):
         response = requests.get(
             url=TEST_API_ENDPOINT,
-            headers=self.generate_headers(False),
+            headers=self.generate_headers(False, False),
         )
         response.raise_for_status()
         print(response.status_code)
@@ -79,7 +81,7 @@ class AppleMusicClient:
         playlist_url = PLAYLISTS_API_ENDPOINT
         playlist_url = playlist_url
 
-        playlist_headers = self.generate_headers(True)
+        playlist_headers = self.generate_headers(True, False)
 
         response = requests.get(
             url=playlist_url,
@@ -88,3 +90,26 @@ class AppleMusicClient:
         response.raise_for_status()
         search_results = response.json()
         print(response.text)
+
+    def add_new_playlist(self, playlist_name, track_ids):
+        payload = {
+            "attributes": {
+                "name": playlist_name
+            },
+            "relationships": {
+                "tracks": {
+                    "data": [{"id": track_id, "type": "songs"} for track_id in track_ids]
+                }
+            }
+        }
+
+        headers = self.generate_headers(True, True)
+
+        response = requests.post(PLAYLISTS_API_ENDPOINT, headers=headers, data=json.dumps(payload))
+
+        if response.status_code == 201:
+            print("Playlist created successfully!")
+            print("Playlist details:", response.json())
+        else:
+            print(f"Failed to create playlist: {response.status_code}")
+            print("Response:", response.json())
