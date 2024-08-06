@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple MusicKit Token Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        p {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Apple MusicKit Token Generator</h1>
+    <label for="developer-token">Developer Token:</label>
+    <input type="text" id="developer-token" placeholder="Enter your developer token">
+
+    <label for="app-bundle-id">App Bundle ID:</label>
+    <input type="text" id="app-bundle-id" placeholder="Enter your app bundle ID">
+
+    <button id="get-token">Get Music User Token</button>
+    <button id="copy-token" style="display:none;">Copy Token to Clipboard</button>
+    <p id="token-display">Your token will appear here</p>
+
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <script>
+        document.getElementById('get-token').addEventListener('click', async function() {
+            try {
+                const developerToken = document.getElementById('developer-token').value;
+                const appBundleId = document.getElementById('app-bundle-id').value;
+
+                if (!developerToken || !appBundleId) {
+                    alert('Please enter both Developer Token and App Bundle ID');
+                    return;
+                }
+
+                // Log initial setup
+                console.log('Initializing MusicKit with Developer Token:', developerToken);
+                console.log('App Bundle ID:', appBundleId);
+
+                // Initialize MusicKit
+                MusicKit.configure({
+                    developerToken: developerToken,
+                    app: {
+                        name: 'Your App Name',
+                        build: '1.0'
+                    }
+                });
+
+                // Log MusicKit instance creation
+                console.log('MusicKit configured successfully.');
+
+                const music = MusicKit.getInstance();
+
+                // Log before authorization
+                console.log('Requesting authorization...');
+                const musicUserToken = await music.authorize();
+
+                // Log after authorization
+                console.log('Authorization successful.');
+                console.log('Music User Token:', musicUserToken);
+
+                // Display the token
+                document.getElementById('token-display').textContent = musicUserToken;
+
+                // Show the copy button
+                document.getElementById('copy-token').style.display = 'inline-block';
+            } catch (error) {
+                console.error('Error getting music user token:', error);
+                document.getElementById('token-display').textContent = 'Failed to retrieve token. Check the console for errors.';
+            }
+        });
+
+        document.getElementById('copy-token').addEventListener('click', function() {
+            const token = document.getElementById('token-display').textContent;
+            navigator.clipboard.writeText(token).then(() => {
+                alert('Token copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy token:', err);
+            });
+        });
+    </script>
+</body>
+</html>
