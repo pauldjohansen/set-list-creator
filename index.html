@@ -29,9 +29,6 @@
     <label for="developer-token">Developer Token:</label>
     <input type="text" id="developer-token" placeholder="Enter your developer token">
 
-    <label for="app-bundle-id">App Bundle ID:</label>
-    <input type="text" id="app-bundle-id" placeholder="Enter your app bundle ID">
-
     <button id="get-token">Get Music User Token</button>
     <button id="copy-token" style="display:none;">Copy Token to Clipboard</button>
     <p id="token-display">Your token will appear here</p>
@@ -41,16 +38,14 @@
         document.getElementById('get-token').addEventListener('click', async function() {
             try {
                 const developerToken = document.getElementById('developer-token').value;
-                const appBundleId = document.getElementById('app-bundle-id').value;
 
-                if (!developerToken || !appBundleId) {
-                    alert('Please enter both Developer Token and App Bundle ID');
+                if (!developerToken) {
+                    alert('Please enter the Developer Token');
                     return;
                 }
 
                 // Log initial setup
                 console.log('Initializing MusicKit with Developer Token:', developerToken);
-                console.log('App Bundle ID:', appBundleId);
 
                 // Initialize MusicKit
                 MusicKit.configure({
